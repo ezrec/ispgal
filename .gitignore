@@ -1,0 +1,12 @@
+Makefile.in
+Makefile
+/configure
+/config.h.in
+/install-sh
+/missing
+/aclocal.m4
+/autom4te.cache
+config.h
+config.log
+config.status
+stamp-h1
