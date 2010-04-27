@@ -1,5 +1,7 @@
 Makefile.in
 Makefile
+*.o
+.deps
 /configure
 /config.h.in
 /install-sh
@@ -10,3 +12,5 @@ config.h
 config.log
 config.status
 stamp-h1
+/src/ispgal
+depcomp
