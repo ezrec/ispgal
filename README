@@ -1,4 +1,15 @@
+Copyright 2010, Jason S. McMullan <jason.mcmullan@gmail.com>
+
+Licensed with GPLv2
 
 Device programming for Lattice ispGAL22V10 parts
 
 Does not support the ispGAL22LV10 series.
+
+This code DOES NOT YET FUNCTION, EXCEPT FOR:
+
+* Amontek JTAGKey Tiny adapters
+* ispGAL22V10 parts
+  * Reading the ispGAL22V10 part ID via LSC
+
+ALL OTHER FUNCTIONS ARE NOT YET WORKING
