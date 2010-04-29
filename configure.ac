@@ -17,6 +17,9 @@ AC_PROG_CC
 # Checks for typedefs, structures, and compiler characteristics.
 
 # Checks for library functions.
+AC_CHECK_LIB([ftdi], [ftdi_init],
+	        [],
+	     	AC_MSG_ERROR([libftdi is required]))
 
 AC_OUTPUT([
 	Makefile

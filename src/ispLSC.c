@@ -19,21 +19,20 @@
  *
  */
 #include <time.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 #include "bitmap.h"
 #include "ispLSC.h"
 
-static void nsleep(unsigned int nsec)
+void nsleep(unsigned int nsec)
 {
 	struct timespec req = { .tv_sec = 0, .tv_nsec = nsec };
 	nanosleep(&req, NULL);
 }
 
-int ispLSC_Read_ID(struct ispLSC *isp, uint8_t *id)
+int ispLSC_Idle(struct ispLSC *isp)
 {
-	int i;
-	uint8_t in;
-
 	isp->MODE(isp->priv, 1);
 	isp->SDI(isp->priv, 0);
 
@@ -42,19 +41,46 @@ int ispLSC_Read_ID(struct ispLSC *isp, uint8_t *id)
 	isp->SCLK(isp->priv, 1);
 	nsleep(isp->T.clkh);
 	isp->SCLK(isp->priv, 0);
+}
+
+int ispLSC_Read_ID(struct ispLSC *isp, uint8_t *id)
+{
+	int i;
+	uint8_t in;
+
+	/* Clock ID into the shift register
+	 */
+	isp->MODE(isp->priv, 1);
+	isp->SDI(isp->priv, 0);
+	nsleep(isp->T.su);
+
+	for (i = 0; i < 8; i++) {
+		isp->SCLK(isp->priv, 1);
+		nsleep(isp->T.clkh);
+		isp->SCLK(isp->priv, 0);
+		nsleep(isp->T.clkl);
+	}
+
+	/* Clock shift register (with ID) 
+	 * out to SDO
+	 */
+	isp->MODE(isp->priv, 0);
+	isp->SDI(isp->priv, 0);
+	nsleep(isp->T.su);
 
 	in = 0;
 	for (i = 0; i < 8; i++) {
 		int val;
 
+		nsleep(isp->T.co);
 		isp->SDO(isp->priv, &val);
 
 		in |= (val & 1) << i;
 
 		isp->SCLK(isp->priv, 1);
-		nsleep(isp->T.wh);
+		nsleep(isp->T.clkh);
 		isp->SCLK(isp->priv, 0);
-		nsleep(isp->T.wl);
+		nsleep(isp->T.clkl);
 	}
 
 	*id = in;
@@ -103,7 +129,7 @@ int ispLSC_Run_Command(struct ispLSC *isp)
 	nsleep(isp->T.su);
 
 	isp->SCLK(isp->priv, 1);
-	nsleep(isp->T.wh);
+	nsleep(isp->T.clkh);
 
 	isp->SCLK(isp->priv, 0);
 }
@@ -138,7 +164,7 @@ int ispLSC_Read_Data(struct ispLSC *isp, uint32_t *bitmap, int bits)
 		isp->SCLK(isp->priv, 1);
 		nsleep(isp->T.clkh);
 		isp->SCLK(isp->priv, 0);
-
+		nsleep(isp->T.co);
 		isp->SDO(isp->priv, &v);
 
 		bit_set(bitmap, i, v);

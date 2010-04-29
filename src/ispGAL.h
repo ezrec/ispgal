@@ -33,6 +33,6 @@
 #define ISPGAL_FLOWTHRU		0x0e	/* Pass through */
 #define ISPGAL_ARCH_SHIFT	0x14	/* Enable Arch register */
 
-#define ISPGAL_
+#define ISPGAL_ID_22V10		0x08
 
 #endif /* ISPGAL_H */

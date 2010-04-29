@@ -29,18 +29,21 @@ struct ispLSC {
 	int (*SDI)(void *priv, int v);
 	int (*SCLK)(void *priv, int v);
 	int (*SDO)(void *priv, int *v);
-
-	struct {
-		unsigned int su;	/* In ns */
-		unsigned int clkh;	/* In ns */
-		unsigned int wh;	/* In ns */
-		unsigned int wl;	/* In ns */
-		unsigned int h;		/* In ns */
-	} T;
-
 	void *priv;
+
+	struct ispLSC_Timing {
+		unsigned int su;	/* nsec */
+		unsigned int h;		/* nsec */
+		unsigned int co;	/* nsec */
+		unsigned int clkh;	/* nsec */
+		unsigned int clkl;	/* nsec */
+		unsigned int pwp;	/* nsec */
+		unsigned int pwe;	/* nsec */
+		unsigned int pwv;	/* nsec */
+	} T;
 };
 
+int ispLSC_Idle(struct ispLSC *isp);
 
 int ispLSC_Read_ID(struct ispLSC *isp, uint8_t *id);
 
