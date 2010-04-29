@@ -41,6 +41,7 @@ int ispLSC_Idle(struct ispLSC *isp)
 	isp->SCLK(isp->priv, 1);
 	nsleep(isp->T.clkh);
 	isp->SCLK(isp->priv, 0);
+	printf("\n");
 }
 
 int ispLSC_Read_ID(struct ispLSC *isp, uint8_t *id)
@@ -84,6 +85,7 @@ int ispLSC_Read_ID(struct ispLSC *isp, uint8_t *id)
 	}
 
 	*id = in;
+	printf("\n");
 	return 0;
 }
 
@@ -103,6 +105,7 @@ int ispLSC_Next_State(struct ispLSC *isp)
 
 	isp->SCLK(isp->priv, 0);
 
+	printf("\n");
 	return 0;
 }
 
@@ -119,6 +122,7 @@ int ispLSC_Set_Command(struct ispLSC *isp, uint8_t cmd)
 		nsleep(isp->T.clkh);
 		isp->SCLK(isp->priv, 0);
 	}
+	printf("\n");
 }
 
 int ispLSC_Run_Command(struct ispLSC *isp)
@@ -132,6 +136,7 @@ int ispLSC_Run_Command(struct ispLSC *isp)
 	nsleep(isp->T.clkh);
 
 	isp->SCLK(isp->priv, 0);
+	printf("\n");
 }
 
 int ispLSC_Write_Data(struct ispLSC *isp, uint32_t *bitmap, int bits)
@@ -150,6 +155,7 @@ int ispLSC_Write_Data(struct ispLSC *isp, uint32_t *bitmap, int bits)
 		nsleep(isp->T.clkh);
 		isp->SCLK(isp->priv, 0);
 	}
+	printf("\n");
 }
 
 int ispLSC_Read_Data(struct ispLSC *isp, uint32_t *bitmap, int bits)
@@ -169,4 +175,6 @@ int ispLSC_Read_Data(struct ispLSC *isp, uint32_t *bitmap, int bits)
 
 		bit_set(bitmap, i, v);
 	}
+
+	printf("\n");
 }

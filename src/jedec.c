@@ -28,10 +28,29 @@
 
 #include "jedec.h"
 
+struct jedec *jedec_new(int bits)
+{
+	struct jedec *jed;
+	int words;
+
+	words = (bits + sizeof(uint32_t)*8 - 1)/(sizeof(uint32_t)*8);
+	jed = malloc(sizeof(*jed) + words * sizeof(uint32_t));
+	jed->bits = bits;
+	jed->bitmap = (void *)&jed[1];
+	memset(jed->bitmap, 0xff, words * sizeof(uint32_t));
+
+	return jed;
+}
+
+void jedec_free(struct jedec *jed)
+{
+	free(jed);
+}
+
 struct jedec *jedec_read(int fd)
 {
 	FILE *inf;
-	int bit, bits, words;
+	int bit, bits;
 	char buff[1024];
 	struct jedec *jed;
 
@@ -45,11 +64,8 @@ struct jedec *jedec_read(int fd)
 printf("LINE: %s", buff);
 		if (strncmp(buff, "*QF", 3) == 0) {
 			bits = strtoul(&buff[3], NULL, 10);
-			words = (bits + sizeof(uint32_t)*8 - 1)/(sizeof(uint32_t)*8);
-			jed = malloc(sizeof(*jed) + words * sizeof(uint32_t));
-			jed->bits = bits;
-			jed->bitmap = (void *)&jed[1];
-			memset(jed->bitmap, 0xff, words * sizeof(uint32_t));
+
+			jed = jedec_new(bits);
 			continue;
 		}
 

@@ -19,24 +19,48 @@
  *
  */
 
-#ifndef BITMAP_H
-#define BITMAP_H
+#include <stdio.h>
+#include <malloc.h>
+#include <string.h>
 
-#include <stdint.h>
+#include "chip.h"
 
-#define DECLARE_BITMAP(name, bits) \
-	uint32_t name[((bits) + 31)/32]
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(x)	(sizeof(x)/sizeof((x)[0]))
+#endif
 
-static inline void bit_set(uint32_t *bitmap, int bit, int val)
+extern const struct chip chip_ispGAL22V10;
+
+static struct {
+	const char *name;
+	const struct chip *chip;
+} known_chips[] = {
+	{ "GAL22V10", &chip_ispGAL22V10 },
+	{ "ispGAL22V10", &chip_ispGAL22V10 },
+};
+
+struct chip *chip_detect(const char *name, const char *interface_type)
 {
-	bitmap[bit / 32] &= ~(1 << (bit & 31));
-	bitmap[bit / 32] |= ((val & 1) << (bit & 31));
+	int i, err;
+	struct chip *chip;
+
+	for (i = 0; i < ARRAY_SIZE(known_chips); i++) {
+		if (strcasecmp(known_chips[i].name, name) == 0)
+			break;
+	}
+
+	if (i == ARRAY_SIZE(known_chips))
+		return NULL;
+
+	chip = malloc(sizeof(*chip) + known_chips[i].chip->priv_size);
+
+	*chip = *known_chips[i].chip;
+	err = chip->init(chip, interface_type);
+	if (err < 0) {
+		free(chip);
+		return NULL;
+	}
+
+	return chip;
 }
 
-static inline int bit_get(uint32_t *bitmap, int bit)
-{
-	return (bitmap[bit / 32] >> (bit & 31)) & 1;
-}
-
-
-#endif /* BITMAP_H */

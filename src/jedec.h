@@ -41,6 +41,10 @@ static inline int jedec_bit_get(struct jedec *jed, int fuse)
 	return bit_get(jed->bitmap, fuse);
 }
 
+/* Return a new, erased JEDEC fusemap */
+struct jedec *jedec_new(int bits);
+
+void jedec_free(struct jedec *jed);
 
 struct jedec *jedec_read(int fd);
 

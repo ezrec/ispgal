@@ -19,24 +19,31 @@
  *
  */
 
-#ifndef BITMAP_H
-#define BITMAP_H
+#ifndef CHIP_H
+#define CHIP_H
 
-#include <stdint.h>
+#include "jedec.h"
 
-#define DECLARE_BITMAP(name, bits) \
-	uint32_t name[((bits) + 31)/32]
+struct chip {
+	int (*init)(struct chip *chip, const char *interface_type);
+	int (*erase)(struct chip *chip);
+	int (*program)(struct chip *chip, struct jedec *jed);
+	int (*verify)(struct chip *chip, struct jedec *jed);
 
-static inline void bit_set(uint32_t *bitmap, int bit, int val)
-{
-	bitmap[bit / 32] &= ~(1 << (bit & 31));
-	bitmap[bit / 32] |= ((val & 1) << (bit & 31));
-}
+	size_t priv_size;
+};
 
-static inline int bit_get(uint32_t *bitmap, int bit)
-{
-	return (bitmap[bit / 32] >> (bit & 31)) & 1;
-}
+#define CHIP_PRIV(chip)	((void *)&chip[1])
 
+struct chip *chip_detect(const char *name, const char *interface_type);
 
-#endif /* BITMAP_H */
+static inline int chip_erase(struct chip *chip)
+{ return chip->erase(chip); }
+
+static inline int chip_program(struct chip *chip, struct jedec *jed)
+{ return chip->program(chip, jed); }
+
+static inline int chip_verify(struct chip *chip, struct jedec *jed)
+{ return chip->verify(chip, jed); }
+
+#endif /* CHIP_H */
