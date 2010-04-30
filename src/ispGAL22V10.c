@@ -167,7 +167,7 @@ static void put_gal_row(struct jedec *jed, int row, uint32_t *bitmap)
 		}
 
 		assert(rid == row);
-
+printf("Row %2d: ", row);bit_dump(bitmap, 138);printf("\n");
 		return;
 	} 
 
@@ -187,6 +187,7 @@ static void put_gal_row(struct jedec *jed, int row, uint32_t *bitmap)
 
 		assert(row == rid);
 
+printf("Row %2d: ", row);bit_dump(bitmap, 138);printf("\n");
 		return;
 	}
 
@@ -198,6 +199,7 @@ static void put_gal_row(struct jedec *jed, int row, uint32_t *bitmap)
 			jedec_bit_set(jed, 5808 + (i ^ 1), fuse);
 		}
 
+printf("Row %2d: ", row);bit_dump(bitmap, 20);printf("\n");
 		return;
 	}
 
@@ -249,6 +251,8 @@ static int ispGAL22V10_verify(struct chip *chip, struct jedec *jed)
 	if (id != 0x08)
 		return -ENODEV;
 
+	ispLSC_Next_State(&priv->isp);	/* IDLE => SHIFT */
+
 	for (i = 0; i < 46; i++) {
 		if (i == 45)
 			ispLSC_Set_Command(&priv->isp, ISPGAL_ARCH_SHIFT);
@@ -282,11 +286,19 @@ static int ispGAL22V10_verify(struct chip *chip, struct jedec *jed)
 	return 0;
 }
 
+static int ispGAL22V10_diagnose(struct chip *chip)
+{
+	struct ispGAL22V10 *priv = CHIP_PRIV(chip);
+
+	return ispLSC_Diagnose(&priv->isp);
+}
+
 struct chip chip_ispGAL22V10 = {
 	.init	= ispGAL22V10_init,
 	.erase	= ispGAL22V10_erase,
 	.program = ispGAL22V10_program,
 	.verify	= ispGAL22V10_verify,
+	.diagnose = ispGAL22V10_diagnose,
 	.priv_size = sizeof(struct ispGAL22V10)
 };
 

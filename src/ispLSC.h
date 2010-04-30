@@ -41,6 +41,12 @@ struct ispLSC {
 		unsigned int pwe;	/* nsec */
 		unsigned int pwv;	/* nsec */
 	} T;
+
+	enum {
+		ISP_STATE_IDLE,
+		ISP_STATE_SHIFT,
+		ISP_STATE_EXECUTE,
+	} state;
 };
 
 int ispLSC_Idle(struct ispLSC *isp);
@@ -57,5 +63,6 @@ int ispLSC_Write_Data(struct ispLSC *isp, uint32_t *bitmap, int bits);
 
 int ispLSC_Read_Data(struct ispLSC *isp, uint32_t *bitmap, int bits);
 
+int ispLSC_Diagnose(struct ispLSC *isp);
 
 #endif /* ISPLSC_H */

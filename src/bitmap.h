@@ -23,9 +23,10 @@
 #define BITMAP_H
 
 #include <stdint.h>
+#include <stdio.h>
 
 #define DECLARE_BITMAP(name, bits) \
-	uint32_t name[((bits) + 31)/32]
+	uint32_t __##name[((bits) + 31)/32], *name = &__##name[0]
 
 static inline void bit_set(uint32_t *bitmap, int bit, int val)
 {
@@ -38,5 +39,12 @@ static inline int bit_get(uint32_t *bitmap, int bit)
 	return (bitmap[bit / 32] >> (bit & 31)) & 1;
 }
 
+static inline void bit_dump(uint32_t *bitmap, int bits)
+{
+	int i;
+
+	for (i = 0; i < bits; i++)
+		printf("%c", bit_get(bitmap, (bits - 1) - i) + '0');
+}
 
 #endif /* BITMAP_H */

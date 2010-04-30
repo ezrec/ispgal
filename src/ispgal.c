@@ -91,18 +91,26 @@ static void dump_jed(struct jedec *jed)
 
 int main(int argc, char **argv)
 {
-	struct jedec *jed;
+	struct jedec *jed_in, *jed_out;
 	struct chip *chip;
 	int err;
 
 	chip = chip_detect("ispGAL22V10", "jtagkey");
 	assert(chip != NULL);
 
+	err = chip_diagnose(chip);
+	if (err < 0)
+		return EXIT_FAILURE;
+
 	chip_erase(chip);
 
-	jed = jedec_new(5892);
-	chip_verify(chip, jed);
-	dump_jed(jed);
+	jed_in = jedec_read(0);
+	chip_program(chip, jed_in);
+
+	jed_out = jedec_new(5892);
+	chip_verify(chip, jed_out);
+
+	dump_jed(jed_out);
 
 	return 0;
 }

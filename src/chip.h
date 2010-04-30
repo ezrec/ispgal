@@ -29,6 +29,7 @@ struct chip {
 	int (*erase)(struct chip *chip);
 	int (*program)(struct chip *chip, struct jedec *jed);
 	int (*verify)(struct chip *chip, struct jedec *jed);
+	int (*diagnose)(struct chip *chip);
 
 	size_t priv_size;
 };
@@ -45,5 +46,8 @@ static inline int chip_program(struct chip *chip, struct jedec *jed)
 
 static inline int chip_verify(struct chip *chip, struct jedec *jed)
 { return chip->verify(chip, jed); }
+
+static inline int chip_diagnose(struct chip *chip)
+{ return chip->diagnose(chip); }
 
 #endif /* CHIP_H */

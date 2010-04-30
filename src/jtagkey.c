@@ -41,7 +41,6 @@ static int jtagkey_MODE(void *priv, int v)
 	struct jtagkey *jk = priv;
 
 	jk->pins = (jk->pins & ~PIN_MODE) | (v ? PIN_MODE : 0);
-printf("%c", (jk->pins & PIN_MODE) ? 'M' : 'm');
 
 	return ftdi_write_data(&jk->ftdi, &jk->pins, 1);
 }
@@ -51,7 +50,6 @@ static int jtagkey_SDI(void *priv, int v)
 	struct jtagkey *jk = priv;
 
 	jk->pins = (jk->pins & ~PIN_SDI) | (v ? PIN_SDI : 0);
-printf("%c", (jk->pins & PIN_SDI) ? 'I' : 'i');
 
 	return ftdi_write_data(&jk->ftdi, &jk->pins, 1);
 }
@@ -61,7 +59,6 @@ static int jtagkey_SCLK(void *priv, int v)
 	struct jtagkey *jk = priv;
 
 	jk->pins = (jk->pins & ~PIN_SCLK) | (v ? PIN_SCLK : 0);
-printf("%c", (jk->pins & PIN_SCLK) ? '^' : 'v');
 
 	return ftdi_write_data(&jk->ftdi, &jk->pins, 1);
 }
@@ -76,8 +73,6 @@ static int jtagkey_SDO(void *priv, int *v)
 	if (err < 0) {
 		return -EIO;
 	}
-printf("%x", c & 0xf);
-printf("%c", (c & PIN_SDO) ? '1' : '0');
 
 	*v = (c & PIN_SDO) ? 1 : 0;
 	return 0;

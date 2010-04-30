@@ -11,5 +11,6 @@ This code DOES NOT YET FUNCTION, EXCEPT FOR:
 * Amontek JTAGKey Tiny adapters
 * ispGAL22V10 parts
   * Reading the ispGAL22V10 part ID via LSC
+  * Erase and Program a ispGAL22V10 (NOT VERIFIED CORRECT!)
 
 ALL OTHER FUNCTIONS ARE NOT YET WORKING
