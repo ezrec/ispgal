@@ -23,46 +23,45 @@
 #include <malloc.h>
 #include <string.h>
 
-#include "chip.h"
+#include "jtag.h"
 
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(x)	(sizeof(x)/sizeof((x)[0]))
 #endif
 
-extern const struct chip chip_ispGAL22V10;
-extern const struct chip chip_ispGAL22LV10;
+extern const struct jtag jtag_jtagkey;
+extern const struct jtag jtag_svf;
 
 static struct {
 	const char *name;
-	const struct chip *chip;
-} known_chips[] = {
-	{ "GAL22V10", &chip_ispGAL22V10 },
-	{ "ispGAL22V10", &chip_ispGAL22V10 },
-	{ "ispGAL22LV10", &chip_ispGAL22LV10 },
+	const struct jtag *jtag;
+} known_jtags[] = {
+	{ "svf", &jtag_svf },
+	{ "jtagkey", &jtag_jtagkey },
 };
 
-struct chip *chip_detect(const char *name, const char *interface_type)
+struct jtag *jtag_detect(const char *name)
 {
 	int i, err;
-	struct chip *chip;
+	struct jtag *jtag;
 
-	for (i = 0; i < ARRAY_SIZE(known_chips); i++) {
-		if (strcasecmp(known_chips[i].name, name) == 0)
+	for (i = 0; i < ARRAY_SIZE(known_jtags); i++) {
+		if (strcasecmp(known_jtags[i].name, name) == 0)
 			break;
 	}
 
-	if (i == ARRAY_SIZE(known_chips))
+	if (i == ARRAY_SIZE(known_jtags))
 		return NULL;
 
-	chip = malloc(sizeof(*chip) + known_chips[i].chip->priv_size);
+	jtag = malloc(sizeof(*jtag) + known_jtags[i].jtag->priv_size);
 
-	*chip = *known_chips[i].chip;
-	err = chip->init(chip, interface_type);
+	*jtag = *known_jtags[i].jtag;
+	err = jtag->init(jtag);
 	if (err < 0) {
-		free(chip);
+		free(jtag);
 		return NULL;
 	}
 
-	return chip;
+	return jtag;
 }
 

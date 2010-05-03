@@ -113,15 +113,16 @@ static int get_gal_row(struct jedec *jed, int row, uint32_t *bitmap)
 	} 
 
 	if (row == 44) {	/* UES row, 138 bits */
-		/* Pad with dummy ones */
-		for (i = 0; i < 68; i++) {
-			bit_set(bitmap, i, 1);
-		}
 		for (i = 0; i < 64; i++) {
 			int fuse;
 
 			fuse = jedec_bit_get(jed, 5828 + i);
-			bit_set(bitmap, 68 + i, fuse);
+			bit_set(bitmap, i, fuse);
+		}
+
+		/* Pad with dummy ones */
+		for (i = 0; i < 68; i++) {
+			bit_set(bitmap, 64 + i, 1);
 		}
 
 		for (i = 0; i < 6; i++) {
@@ -167,16 +168,14 @@ static void put_gal_row(struct jedec *jed, int row, uint32_t *bitmap)
 		}
 
 		assert(rid == row);
-printf("Row %2d: ", row);bit_dump(bitmap, 138);printf("\n");
 		return;
 	} 
 
 	if (row == 44) {	/* UES row, 138 bits */
-		/* Pad with dummy ones */
 		for (i = 0; i < 64; i++) {
 			int fuse;
 
-			fuse = bit_get(bitmap, 68 + i);
+			fuse = bit_get(bitmap, i);
 			jedec_bit_set(jed, 5828 + i, fuse);
 		}
 
@@ -187,7 +186,6 @@ printf("Row %2d: ", row);bit_dump(bitmap, 138);printf("\n");
 
 		assert(row == rid);
 
-printf("Row %2d: ", row);bit_dump(bitmap, 138);printf("\n");
 		return;
 	}
 
@@ -199,7 +197,6 @@ printf("Row %2d: ", row);bit_dump(bitmap, 138);printf("\n");
 			jedec_bit_set(jed, 5808 + (i ^ 1), fuse);
 		}
 
-printf("Row %2d: ", row);bit_dump(bitmap, 20);printf("\n");
 		return;
 	}
 

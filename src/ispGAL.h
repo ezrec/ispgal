@@ -35,4 +35,20 @@
 
 #define ISPGAL_ID_22V10		0x08
 
+/* 5-bit ispGAL22LV10 command */
+#define JTAGGAL_ROW_MASK	0x01	/* Set mask of rows to read/write */
+#define JTAGGAL_ROW_SHIFT	0x02	/* Shift in row data */
+#define JTAGGAL_ROW_ERASE	0x03	/* Erase the device */
+#define JTAGGAL_ROW_PROG	0x07	/* Program row from shift */
+#define JTAGGAL_ROW_VERIFY	0x0a	/* Read row into shift register */
+#define JTAGGAL_ARCH_PROG	0x0B	/* Program the Arch row */
+#define JTAGGAL_ARCH_SHIFT	0x0C	/* Shift in Arch row */
+#define JTAGGAL_USER_PROG	0x0F	/* Program the USERCODE row */
+#define JTAGGAL_USER_VERIFY	0x11	/* Copy USERCODE to data shift */
+#define JTAGGAL_PROG_ENABLE	0x15	/* Enable programming mode */
+#define JTAGGAL_IDCODE		0x16	/* Get the ID code */
+#define JTAGGAL_ARCH_ERASE	0x1B	/* Erase arch row */
+#define JTAGGAL_PROG_DISABLE	0x1e	/* Disable programming mode */
+#define JTAGGAL_ID_22LV10	0x00009043	/* 32-bit ID */
+
 #endif /* ISPGAL_H */

@@ -47,4 +47,27 @@ static inline void bit_dump(uint32_t *bitmap, int bits)
 		printf("%c", bit_get(bitmap, (bits - 1) - i) + '0');
 }
 
+static inline void bit_set_u32(uint32_t *bitmap, int bits, uint32_t val)
+{
+	int i;
+	for (i = 0; i < bits; i++)
+		bit_set(bitmap, i, (val >> i) & 1);
+}
+
+static inline void bit_ones(uint32_t *bitmap, int bits)
+{
+	int i;
+
+	for (i = 0; i < bits; i++)
+		bit_set(bitmap, i, 1);
+}
+
+static inline void bit_zeroes(uint32_t *bitmap, int bits)
+{
+	int i;
+
+	for (i = 0; i < bits; i++)
+		bit_set(bitmap, i, 0);
+}
+
 #endif /* BITMAP_H */

@@ -25,6 +25,7 @@
 #include <ftdi.h>
 
 #include "ispLSC.h"
+#include "jtag.h"
 
 #define PIN_SCLK	(1 << 0)
 #define PIN_SDI		(1 << 1)
@@ -121,3 +122,33 @@ int jtagkey_init(struct ispLSC *isp)
 
 	return 0;
 }
+
+/****** JTAG mode *******/
+int jtagkey_jtag_init(struct jtag *jtag)
+{
+	return 0;
+}
+
+int jtagkey_jtag_nsleep(struct jtag *jtag, unsigned int nsec)
+{
+	return 0;
+}
+
+int jtagkey_jtag_IR(struct jtag *jtag, unsigned int bits, uint32_t *in, uint32_t *out)
+{
+	return 0;
+}
+
+int jtagkey_jtag_DR(struct jtag *jtag, unsigned int bits, uint32_t *in, uint32_t *out)
+{
+	return 0;
+}
+
+const struct jtag jtag_jtagkey = {
+	.init = jtagkey_jtag_init,
+	.nsleep = jtagkey_jtag_nsleep,
+	.IR = jtagkey_jtag_IR,
+	.DR = jtagkey_jtag_DR,
+
+	.priv_size = 0,
+};

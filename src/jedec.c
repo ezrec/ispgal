@@ -61,11 +61,12 @@ struct jedec *jedec_read(int fd)
 	jed = NULL;
 
 	while (fgets(buff, sizeof(buff)-1, inf) != NULL) {
-printf("LINE: %s", buff);
+//printf("LINE: %s", buff);
 		if (strncmp(buff, "*QF", 3) == 0) {
 			bits = strtoul(&buff[3], NULL, 10);
 
 			jed = jedec_new(bits);
+			bit_zeroes(jed->bitmap, bits);
 			continue;
 		}
 

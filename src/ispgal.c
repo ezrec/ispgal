@@ -95,7 +95,8 @@ int main(int argc, char **argv)
 	struct chip *chip;
 	int err;
 
-	chip = chip_detect("ispGAL22V10", "jtagkey");
+//	chip = chip_detect("ispGAL22V10", "jtagkey");
+	chip = chip_detect("ispGAL22LV10", "svf");
 	assert(chip != NULL);
 
 	err = chip_diagnose(chip);
@@ -108,9 +109,9 @@ int main(int argc, char **argv)
 	chip_program(chip, jed_in);
 
 	jed_out = jedec_new(5892);
-	chip_verify(chip, jed_out);
+	chip_verify(chip, jed_in);
 
-	dump_jed(jed_out);
+//	dump_jed(jed_out);
 
 	return 0;
 }
