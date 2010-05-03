@@ -25,7 +25,10 @@
 #include <stdint.h>
 
 struct jtag {
-	int (*init)(struct jtag *jtag);
+	const char *name;
+	const char *help;
+	int (*open)(struct jtag *jtag, const char *options);
+	int (*close)(struct jtag *jtag);
 	int (*nsleep)(struct jtag *jtag, unsigned int nsec);
 	int (*IR)(struct jtag *jtag, unsigned int bits, uint32_t *in, uint32_t *out);
 	int (*DR)(struct jtag *jtag, unsigned int bits, uint32_t *in, uint32_t *out);
@@ -35,7 +38,9 @@ struct jtag {
 
 #define JTAG_PRIV(x)	((void *)(&x[1]))
 
-struct jtag *jtag_detect(const char *type);
+struct jtag *jtag_open(const char *type);
+
+void jtag_close(struct jtag *jtag);
 
 /* Send an IR command */
 static inline int jtag_IR(struct jtag *jtag, unsigned int bits, uint32_t *in, uint32_t *out)

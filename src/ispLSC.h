@@ -25,6 +25,10 @@
 #include <stdint.h>
 
 struct ispLSC {
+	const char *name;
+	const char *help;
+
+	int (*init)(struct ispLSC *isp, const char *options);
 	int (*MODE)(void *priv, int v);	
 	int (*SDI)(void *priv, int v);
 	int (*SCLK)(void *priv, int v);

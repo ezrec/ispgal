@@ -2,15 +2,18 @@ Copyright 2010, Jason S. McMullan <jason.mcmullan@gmail.com>
 
 Licensed with GPLv2
 
-Device programming for Lattice ispGAL22V10 parts
+Device programming for Lattice ispGAL22V10 and ispGAL22LV10 series parts.
 
-Does not support the ispGAL22LV10 series.
+This code only supports the following functions:
 
-This code DOES NOT YET FUNCTION, EXCEPT FOR:
-
-* Amontek JTAGKey Tiny adapters
+* Amontek JTAGKey Tiny (in bitbang LSC mode)
 * ispGAL22V10 parts
-  * Reading the ispGAL22V10 part ID via LSC
-  * Erase and Program a ispGAL22V10 (NOT VERIFIED CORRECT!)
+  * The target device *MUST* be the first device in the scan chain
+  * Reading the part ID via LSC
+  * Verify that the part is LSC compliant
+  * Erase, Program, Verify via LSC (NOT VERIFIED CORRECT!)
 
-ALL OTHER FUNCTIONS ARE NOT YET WORKING
+* ispGAL22LV10 parts
+  * The target device *MUST* be the first device in the scan chain
+  * Reading the part ID via JTAG
+  * Erase, Program, Verify via SVF file (NOT VERIFIED CORRECT!)

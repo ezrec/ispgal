@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <malloc.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "jtag.h"
 
@@ -32,31 +33,49 @@
 extern const struct jtag jtag_jtagkey;
 extern const struct jtag jtag_svf;
 
-static struct {
-	const char *name;
-	const struct jtag *jtag;
-} known_jtags[] = {
-	{ "svf", &jtag_svf },
-	{ "jtagkey", &jtag_jtagkey },
+static const struct jtag *known_jtags[] = {
+	&jtag_svf,
+	&jtag_jtagkey,
 };
 
-struct jtag *jtag_detect(const char *name)
+struct jtag *jtag_open(const char *jtag_name)
 {
-	int i, err;
+	int i, err, len;
 	struct jtag *jtag;
+	const char *cp, *op;
+
+	cp = strchr(jtag_name, ',');
+	if (cp == NULL) {
+		cp = jtag_name + strlen(jtag_name);
+		op = cp;
+	} else {
+		op = cp+1;
+	}
+	len = cp - jtag_name;
+
+	if (jtag_name == NULL) {
+		fprintf(stderr, "Valid JTAG tool types:\n");
+		for (i = 0; i < ARRAY_SIZE(known_jtags); i++) {
+			fprintf(stderr, "\t%s\n", known_jtags[i]->name);
+		}
+		exit(EXIT_FAILURE);
+	}
 
 	for (i = 0; i < ARRAY_SIZE(known_jtags); i++) {
-		if (strcasecmp(known_jtags[i].name, name) == 0)
+		if (strlen(known_jtags[i]->name) != len)
+			continue;
+
+		if (strncmp(known_jtags[i]->name, jtag_name, len) == 0)
 			break;
 	}
 
 	if (i == ARRAY_SIZE(known_jtags))
 		return NULL;
 
-	jtag = malloc(sizeof(*jtag) + known_jtags[i].jtag->priv_size);
+	jtag = malloc(sizeof(*jtag) + known_jtags[i]->priv_size);
 
-	*jtag = *known_jtags[i].jtag;
-	err = jtag->init(jtag);
+	*jtag = *(known_jtags[i]);
+	err = jtag->open(jtag, op);
 	if (err < 0) {
 		free(jtag);
 		return NULL;
@@ -65,3 +84,8 @@ struct jtag *jtag_detect(const char *name)
 	return jtag;
 }
 
+void jtag_close(struct jtag *jtag)
+{
+	jtag->close(jtag);
+	free(jtag);
+}

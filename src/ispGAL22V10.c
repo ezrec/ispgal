@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <stdlib.h>
 
 #include "chip.h"
 #include "ispGAL.h"
@@ -32,14 +33,21 @@ struct ispGAL22V10 {
 	struct ispLSC isp;
 };
 
-static int ispGAL22V10_init(struct chip *chip, const char *interface)
+static int ispGAL22V10_open(struct chip *chip, const char *options, const char *tool)
 {
 	struct ispGAL22V10 *priv = CHIP_PRIV(chip);
 	uint8_t id;
 	uint32_t bitmap[100];
 	int i,err;
 
-	if (strcasecmp(interface, "jtagkey") != 0) {
+	if (tool == NULL) {
+		fprintf(stderr, "Valid LSC tool types:\n");
+		fprintf(stderr, "\t%s\n", "jtagkey");
+		exit(EXIT_FAILURE);
+	}
+
+
+	if (strcasecmp(tool, "jtagkey") != 0) {
 		return -EINVAL;
 	}
 
@@ -66,6 +74,10 @@ static int ispGAL22V10_init(struct chip *chip, const char *interface)
 	}
 
 	return 0;
+}
+
+static void ispGAL22V10_close(struct chip *chip)
+{
 }
 
 static int ispGAL22V10_erase(struct chip *chip)
@@ -291,7 +303,9 @@ static int ispGAL22V10_diagnose(struct chip *chip)
 }
 
 struct chip chip_ispGAL22V10 = {
-	.init	= ispGAL22V10_init,
+	.name   = "ispGAL22V10",
+	.open	= ispGAL22V10_open,
+	.close	= ispGAL22V10_close,
 	.erase	= ispGAL22V10_erase,
 	.program = ispGAL22V10_program,
 	.verify	= ispGAL22V10_verify,

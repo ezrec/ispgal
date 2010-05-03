@@ -124,9 +124,13 @@ int jtagkey_init(struct ispLSC *isp)
 }
 
 /****** JTAG mode *******/
-int jtagkey_jtag_init(struct jtag *jtag)
+int jtagkey_jtag_open(struct jtag *jtag)
 {
 	return 0;
+}
+
+void jtagkey_jtag_close(struct jtag *jtag)
+{
 }
 
 int jtagkey_jtag_nsleep(struct jtag *jtag, unsigned int nsec)
@@ -145,7 +149,9 @@ int jtagkey_jtag_DR(struct jtag *jtag, unsigned int bits, uint32_t *in, uint32_t
 }
 
 const struct jtag jtag_jtagkey = {
-	.init = jtagkey_jtag_init,
+	.name = "jtagkey",
+	.open = jtagkey_jtag_open,
+	.close = jtagkey_jtag_close,
 	.nsleep = jtagkey_jtag_nsleep,
 	.IR = jtagkey_jtag_IR,
 	.DR = jtagkey_jtag_DR,

@@ -25,7 +25,10 @@
 #include "jedec.h"
 
 struct chip {
-	int (*init)(struct chip *chip, const char *interface_type);
+	const char *name;
+	const char *help;
+	int (*open)(struct chip *chip, const char *options, const char *tool);
+	void (*close)(struct chip *chip);
 	int (*erase)(struct chip *chip);
 	int (*program)(struct chip *chip, struct jedec *jed);
 	int (*verify)(struct chip *chip, struct jedec *jed);
@@ -36,7 +39,9 @@ struct chip {
 
 #define CHIP_PRIV(chip)	((void *)&chip[1])
 
-struct chip *chip_detect(const char *name, const char *interface_type);
+struct chip *chip_open(const char *name, const char *interface_type);
+
+void chip_close(struct chip *chip);
 
 static inline int chip_erase(struct chip *chip)
 { return chip->erase(chip); }

@@ -21,19 +21,27 @@
 
 #include <errno.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "bitmap.h"
 #include "jtag.h"
+
 
 struct svf {
 	FILE *out;
 };
 
-static int svf_init(struct jtag *jtag)
+static int svf_open(struct jtag *jtag, const char *options)
 {
 	struct svf *svf = JTAG_PRIV(jtag);
 
 	svf->out = stdout;
+	if (options != NULL) {
+		svf->out = fopen(options, "w");
+		if (svf->out == NULL) {
+			fprintf(stderr, "%s: %s\n", options, strerror(errno));
+		}
+	}
 
 	fprintf(svf->out, "! ispgal generated SVF file\r\n");
 	fprintf(svf->out, "HDR 0;\r\n");
@@ -45,6 +53,13 @@ static int svf_init(struct jtag *jtag)
 	fprintf(svf->out, "FREQUENCY 1000000 HZ;\r\n");
 
 	return 0;
+}
+
+static void svf_close(struct jtag *jtag)
+{
+	struct svf *svf = JTAG_PRIV(jtag);
+
+	fclose(svf->out);
 }
 
 static int svf_nsleep(struct jtag *jtag, unsigned int nsec)
@@ -110,7 +125,10 @@ static int svf_DR(struct jtag *jtag, unsigned int bits, uint32_t *in, uint32_t *
 }
 
 const struct jtag jtag_svf = {
-	.init = svf_init,
+	.name = "svf",
+	.help = "\tsvf,filename.svf     Output filename (if not stdout)\n",
+	.open = svf_open,
+	.close = svf_close,
 	.nsleep = svf_nsleep,
 	.IR = svf_IR,
 	.DR = svf_DR,

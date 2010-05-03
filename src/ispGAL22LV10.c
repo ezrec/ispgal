@@ -39,7 +39,7 @@ struct ispGAL22LV10 {
 	} T;
 };
 
-static int ispGAL22LV10_init(struct chip *chip, const char *interface)
+static int ispGAL22LV10_open(struct chip *chip, const char *options, const char *interface)
 {
 	struct ispGAL22LV10 *priv = CHIP_PRIV(chip);
 	uint8_t id;
@@ -48,7 +48,7 @@ static int ispGAL22LV10_init(struct chip *chip, const char *interface)
 	DECLARE_BITMAP(in, 32);
 	DECLARE_BITMAP(out, 32);
 
-	priv->jtag = jtag_detect(interface);
+	priv->jtag = jtag_open(interface);
 	if (priv->jtag == NULL)
 		return -ENODEV;
 
@@ -69,6 +69,13 @@ static int ispGAL22LV10_init(struct chip *chip, const char *interface)
 		return err;
 
 	return 0;
+}
+
+void ispGAL22LV10_close(struct chip *chip)
+{
+	struct ispGAL22LV10 *priv = CHIP_PRIV(chip);
+
+	jtag_close(priv->jtag);
 }
 
 static int ispGAL22LV10_erase(struct chip *chip)
@@ -359,7 +366,9 @@ static int ispGAL22LV10_wrap_verify(struct chip *chip, struct jedec *jed)
 }
 
 struct chip chip_ispGAL22LV10 = {
-	.init	= ispGAL22LV10_init,
+	.name   = "ispGAL22LV10",
+	.open	= ispGAL22LV10_open,
+	.close	= ispGAL22LV10_close,
 	.erase	= ispGAL22LV10_wrap_erase,
 	.program = ispGAL22LV10_wrap_program,
 	.verify	= ispGAL22LV10_wrap_verify,

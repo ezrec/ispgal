@@ -20,6 +20,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <malloc.h>
 #include <string.h>
 
@@ -32,32 +33,49 @@
 extern const struct chip chip_ispGAL22V10;
 extern const struct chip chip_ispGAL22LV10;
 
-static struct {
-	const char *name;
-	const struct chip *chip;
-} known_chips[] = {
-	{ "GAL22V10", &chip_ispGAL22V10 },
-	{ "ispGAL22V10", &chip_ispGAL22V10 },
-	{ "ispGAL22LV10", &chip_ispGAL22LV10 },
+static const struct chip *known_chips[] = {
+	&chip_ispGAL22V10,
+	&chip_ispGAL22LV10,
 };
 
-struct chip *chip_detect(const char *name, const char *interface_type)
+struct chip *chip_open(const char *chip_name, const char *tool_name)
 {
-	int i, err;
+	int i, len, err;
 	struct chip *chip;
+	const char *cp, *op;
+
+	cp = strchr(chip_name, ',');
+	if (cp == NULL) {
+		cp = chip_name + strlen(chip_name);
+		op = cp;
+	} else {
+		op = cp+1;
+	}
+	len = cp - chip_name;
+
+	if (chip_name == NULL) {
+		fprintf(stderr, "Valid chip types:\n");
+		for (i = 0; i < ARRAY_SIZE(known_chips); i++) {
+			fprintf(stderr, "\t%s\n", known_chips[i]->name);
+		}
+		exit(EXIT_FAILURE);
+	}
 
 	for (i = 0; i < ARRAY_SIZE(known_chips); i++) {
-		if (strcasecmp(known_chips[i].name, name) == 0)
+		if (strlen(known_chips[i]->name) != len)
+			continue;
+
+		if (strncmp(known_chips[i]->name, chip_name, len) == 0)
 			break;
 	}
 
 	if (i == ARRAY_SIZE(known_chips))
 		return NULL;
 
-	chip = malloc(sizeof(*chip) + known_chips[i].chip->priv_size);
+	chip = malloc(sizeof(*chip) + known_chips[i]->priv_size);
 
-	*chip = *known_chips[i].chip;
-	err = chip->init(chip, interface_type);
+	*chip = *known_chips[i];
+	err = chip->open(chip, op, tool_name);
 	if (err < 0) {
 		free(chip);
 		return NULL;
@@ -66,3 +84,8 @@ struct chip *chip_detect(const char *name, const char *interface_type)
 	return chip;
 }
 
+void chip_close(struct chip *chip)
+{
+	chip->close(chip);
+	free(chip);
+}
