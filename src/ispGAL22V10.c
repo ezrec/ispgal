@@ -27,46 +27,33 @@
 
 #include "chip.h"
 #include "ispGAL.h"
-#include "ispLSC.h"
+#include "lsc.h"
 
 struct ispGAL22V10 {
-	struct ispLSC isp;
+	struct lsc *lsc;
+	struct {
+		unsigned int pwe;	/* nsec */
+		unsigned int pwp;	/* nsec */
+		unsigned int pwv;	/* nsec */
+	} T;
 };
 
 static int ispGAL22V10_open(struct chip *chip, const char *options, const char *tool)
 {
 	struct ispGAL22V10 *priv = CHIP_PRIV(chip);
-	uint8_t id;
+	unsigned int id;
 	uint32_t bitmap[100];
 	int i,err;
 
-	if (tool == NULL) {
-		fprintf(stderr, "Valid LSC tool types:\n");
-		fprintf(stderr, "\t%s\n", "jtagkey");
-		exit(EXIT_FAILURE);
-	}
+	priv->lsc = lsc_open(tool);
+	if (priv->lsc == NULL)
+		return -ENODEV;
 
+	priv->T.pwp  =  40 * 1000 * 1000;	/* nsec */
+	priv->T.pwe  = 200 * 1000 * 1000; /* nsec */
+	priv->T.pwv  =          5 * 1000;	/* nsec */
 
-	if (strcasecmp(tool, "jtagkey") != 0) {
-		return -EINVAL;
-	}
-
-	err = jtagkey_init(&priv->isp);
-	if (err < 0) {
-		fprintf(stderr, "Can't initialize FT2232 AmonTek JtagKey\n");
-		exit(EXIT_FAILURE);
-	}
-
-	priv->isp.T.su   =               100;	/* nsec */
-	priv->isp.T.h    =               100;	/* nsec */
-	priv->isp.T.co   =               210;	/* nsec */
-	priv->isp.T.clkh =               500;	/* nsec */
-	priv->isp.T.clkl =               500;	/* nsec */
-	priv->isp.T.pwp  =  40 * 1000 * 1000;	/* nsec */
-	priv->isp.T.pwe  = 200 * 1000 * 1000; /* nsec */
-	priv->isp.T.pwv  =          5 * 1000;	/* nsec */
-
-	ispLSC_Read_ID(&priv->isp, &id);
+	lsc_Id(priv->lsc, &id);
 
 	if (id != 0x08) {
 		fprintf(stderr, "ispGAL22V10 ID expected 0x08, read back 0x%02x\n", id);
@@ -78,28 +65,17 @@ static int ispGAL22V10_open(struct chip *chip, const char *options, const char *
 
 static void ispGAL22V10_close(struct chip *chip)
 {
+	struct ispGAL22V10 *priv = CHIP_PRIV(chip);
+
+	lsc_close(priv->lsc);
 }
 
 static int ispGAL22V10_erase(struct chip *chip)
 {
 	struct ispGAL22V10 *priv = CHIP_PRIV(chip);
 	struct jedec *jed;
-	uint8_t id;
 
-	ispLSC_Read_ID(&priv->isp, &id);
-	if (id != 0x08)
-		return -ENODEV;
-
-	ispLSC_Next_State(&priv->isp);	/* IDLE => SHIFT */
-	ispLSC_Set_Command(&priv->isp, ISPGAL_BULK_ERASE);
-	ispLSC_Next_State(&priv->isp);	/* SHIFT => EXECUTE */
-	ispLSC_Run_Command(&priv->isp);
-
-	nsleep(priv->isp.T.pwe);
-
-	ispLSC_Next_State(&priv->isp);	/* EXECUTE => SHIFT */
-
-	return 0;
+	return lsc_Run(priv->lsc, ISPGAL_BULK_ERASE, priv->T.pwe);
 }
 
 /* Copy row from JEDEC to bitmap
@@ -227,23 +203,14 @@ static int ispGAL22V10_program(struct chip *chip, struct jedec *jed)
 		return err;
 
 	for (i = 0; i < 46; i++) {
-		if (i == 45)
-			ispLSC_Set_Command(&priv->isp, ISPGAL_ARCH_SHIFT);
-		else
-			ispLSC_Set_Command(&priv->isp, ISPGAL_SHIFT_DATA);
-		ispLSC_Next_State(&priv->isp);	/* SHIFT => EXECUTE */
-
 		len = get_gal_row(jed, i, &bitmap[0]);
 
-		ispLSC_Write_Data(&priv->isp, &bitmap[0], len);
-		ispLSC_Next_State(&priv->isp);	/* EXECUTE => SHIFT */
+		if (i == 45)
+			lsc_Write(priv->lsc, ISPGAL_ARCH_SHIFT, len, &bitmap[0]);
+		else
+			lsc_Write(priv->lsc, ISPGAL_SHIFT_DATA, len, &bitmap[0]);
 
-		ispLSC_Set_Command(&priv->isp, ISPGAL_PROGRAM);
-		ispLSC_Next_State(&priv->isp);	/* SHIFT => EXECUTE */
-
-		ispLSC_Run_Command(&priv->isp);
-		nsleep(priv->isp.T.pwp);
-		ispLSC_Next_State(&priv->isp);	/* EXECUTE => SHIFT */
+		lsc_Run(priv->lsc, ISPGAL_PROGRAM, priv->T.pwp);
 	}
 
 	return 0;
@@ -252,44 +219,23 @@ static int ispGAL22V10_program(struct chip *chip, struct jedec *jed)
 static int ispGAL22V10_verify(struct chip *chip, struct jedec *jed)
 {
 	struct ispGAL22V10 *priv = CHIP_PRIV(chip);
-	uint8_t id;
 	int len, i;
+	unsigned int cmd;
 	DECLARE_BITMAP(bitmap, 138);
 
-	ispLSC_Read_ID(&priv->isp, &id);
-	if (id != 0x08)
-		return -ENODEV;
-
-	ispLSC_Next_State(&priv->isp);	/* IDLE => SHIFT */
-
 	for (i = 0; i < 46; i++) {
-		if (i == 45)
-			ispLSC_Set_Command(&priv->isp, ISPGAL_ARCH_SHIFT);
-		else
-			ispLSC_Set_Command(&priv->isp, ISPGAL_SHIFT_DATA);
-		ispLSC_Next_State(&priv->isp);	/* SHIFT => EXECUTE */
-
 		len = get_gal_row(jed, i, &bitmap[0]);
 
-		ispLSC_Write_Data(&priv->isp, &bitmap[0], len);
-		ispLSC_Next_State(&priv->isp);	/* EXECUTE => SHIFT */
-
-		ispLSC_Set_Command(&priv->isp, ISPGAL_VERIFY);
-		ispLSC_Next_State(&priv->isp);	/* SHIFT => EXECUTE */
-
-		ispLSC_Run_Command(&priv->isp);
-		nsleep(priv->isp.T.pwv);
-		ispLSC_Next_State(&priv->isp);	/* EXECUTE => SHIFT */
-
 		if (i == 45)
-			ispLSC_Set_Command(&priv->isp, ISPGAL_ARCH_SHIFT);
+			cmd = ISPGAL_ARCH_SHIFT;
 		else
-			ispLSC_Set_Command(&priv->isp, ISPGAL_SHIFT_DATA);
-		ispLSC_Next_State(&priv->isp);	/* SHIFT => EXECUTE */
+			cmd = ISPGAL_SHIFT_DATA;
 
-		ispLSC_Read_Data(&priv->isp, &bitmap[0], len);
+		lsc_Write(priv->lsc, cmd, len, &bitmap[0]);
+		lsc_Run(priv->lsc, ISPGAL_VERIFY, priv->T.pwv);
+		lsc_Read(priv->lsc, cmd, len, &bitmap[0]);
+
 		put_gal_row(jed, i, &bitmap[0]);
-		ispLSC_Next_State(&priv->isp);	/* EXECUTE => SHIFT */
 	}
 
 	return 0;
@@ -299,7 +245,7 @@ static int ispGAL22V10_diagnose(struct chip *chip)
 {
 	struct ispGAL22V10 *priv = CHIP_PRIV(chip);
 
-	return ispLSC_Diagnose(&priv->isp);
+	return lsc_bitbang_Diagnose(priv->lsc);
 }
 
 struct chip chip_ispGAL22V10 = {

@@ -26,7 +26,6 @@
 
 #include "chip.h"
 #include "ispGAL.h"
-#include "ispLSC.h"
 #include "jtag.h"
 
 struct ispGAL22LV10 {

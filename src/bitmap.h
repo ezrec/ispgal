@@ -34,12 +34,12 @@ static inline void bit_set(uint32_t *bitmap, int bit, int val)
 	bitmap[bit / 32] |= ((val & 1) << (bit & 31));
 }
 
-static inline int bit_get(uint32_t *bitmap, int bit)
+static inline int bit_get(const uint32_t *bitmap, int bit)
 {
 	return (bitmap[bit / 32] >> (bit & 31)) & 1;
 }
 
-static inline void bit_dump(uint32_t *bitmap, int bits)
+static inline void bit_dump(const uint32_t *bitmap, int bits)
 {
 	int i;
 

@@ -24,8 +24,9 @@
 
 #include <ftdi.h>
 
-#include "ispLSC.h"
 #include "jtag.h"
+#include "lsc.h"
+#include "lsc-bitbang.h"
 
 #define PIN_SCLK	(1 << 0)
 #define PIN_SDI		(1 << 1)
@@ -79,15 +80,12 @@ static int jtagkey_SDO(void *priv, int *v)
 	return 0;
 }
 
-int jtagkey_init(struct ispLSC *isp)
+static int jtagkey_open(struct jtagkey *jk, const char *flags)
 {
 	uint8_t buff[3];
 	uint32_t bytes;
 	int err;
-	struct jtagkey *jk;
 	const int vid = 0x0403, pid = 0xcff8;
-
-	jk = malloc(sizeof(*jk));
 
 	err = ftdi_init(&jk->ftdi);
 	if (err < 0)
@@ -113,15 +111,58 @@ int jtagkey_init(struct ispLSC *isp)
 		return -ENODEV;
 
 	ftdi_set_bitmode(&jk->ftdi, PIN_MODE | PIN_SDI | PIN_SCLK, BITMODE_BITBANG);
+	return 0;
+}
 
-	isp->priv = jk;
-	isp->MODE = jtagkey_MODE;
-	isp->SDI = jtagkey_SDI;
-	isp->SCLK = jtagkey_SCLK;
-	isp->SDO = jtagkey_SDO;
+/****** LSC mode ********/
+void jtagkey_nsleep(struct jtagkey *jk, unsigned long nsec)
+{
+	nsleep(nsec);
+}
+
+int jtagkey_lsc_open(struct lsc *lsc, const char *flags)
+{
+	struct lsc_bitbang *bb = LSC_PRIV(lsc);
+	struct jtagkey *jk = (void *)(&bb[1]);
+	int err;
+
+	err = jtagkey_open(jk, flags);
+	if (err < 0)
+		return err;
+
+	bb->priv   = jk;
+	bb->MODE   = jtagkey_MODE;
+	bb->SDI    = jtagkey_SDI;
+	bb->SCLK   = jtagkey_SCLK;
+	bb->SDO    = jtagkey_SDO;
+	bb->nsleep = jtagkey_nsleep;
+	bb->T.su   = 100;	/* nsec */
+	bb->T.h    = 100;	/* nsec */
+	bb->T.co   = 210;	/* nsec */
+	bb->T.clkh = 500;	/* nsec */
+	bb->T.clkl = 500;	/* nsec */
 
 	return 0;
 }
+
+void jtagkey_lsc_close(struct lsc *lsc)
+{
+}
+
+struct lsc lsc_jtagkey = {
+	.name = "jtagkey",
+	.help = NULL,
+	.open = jtagkey_lsc_open,
+	.close = jtagkey_lsc_close,
+
+	.Id = lsc_bitbang_Id,
+	.Read = lsc_bitbang_Read,
+	.Write = lsc_bitbang_Write,
+	.Run = lsc_bitbang_Run,
+
+	.priv_size = sizeof(struct lsc_bitbang) + sizeof(struct jtagkey),
+};
+
 
 /****** JTAG mode *******/
 int jtagkey_jtag_open(struct jtag *jtag)

@@ -19,54 +19,46 @@
  *
  */
 
-#ifndef ISPLSC_H
-#define ISPLSC_H
+#ifndef LSC_BITBANG_H
+#define LSC_BITBANG_H
 
 #include <stdint.h>
 
-struct ispLSC {
-	const char *name;
-	const char *help;
+#include "lsc.h"
 
-	int (*init)(struct ispLSC *isp, const char *options);
+/* Use this struct as your private data for an LSC interface
+ */
+struct lsc_bitbang {
 	int (*MODE)(void *priv, int v);	
 	int (*SDI)(void *priv, int v);
 	int (*SCLK)(void *priv, int v);
 	int (*SDO)(void *priv, int *v);
+	void (*nsleep)(void *priv, unsigned int nsec);
 	void *priv;
 
-	struct ispLSC_Timing {
+	struct {
 		unsigned int su;	/* nsec */
 		unsigned int h;		/* nsec */
 		unsigned int co;	/* nsec */
 		unsigned int clkh;	/* nsec */
 		unsigned int clkl;	/* nsec */
-		unsigned int pwp;	/* nsec */
-		unsigned int pwe;	/* nsec */
-		unsigned int pwv;	/* nsec */
 	} T;
 
 	enum {
-		ISP_STATE_IDLE,
-		ISP_STATE_SHIFT,
-		ISP_STATE_EXECUTE,
+		LSC_STATE_IDLE,
+		LSC_STATE_SHIFT,
+		LSC_STATE_EXECUTE,
 	} state;
 };
 
-int ispLSC_Idle(struct ispLSC *isp);
+/* Use these as your functions in the 'struct lsc'
+ */
+int lsc_bitbang_Id(struct lsc *lsc, unsigned int *id);
+int lsc_bitbang_Run(struct lsc *lsc, unsigned int cmd, unsigned int nsec);
+int lsc_bitbang_Read(struct lsc *lsc, unsigned int cmd,
+                     unsigned int bits, uint32_t *bitmap);
+int lsc_bitbang_Write(struct lsc *lsc, unsigned int cmd,
+                      unsigned int bits, const uint32_t *bitmap);
+int lsc_bitbang_Diagnose(struct lsc *lsc);
 
-int ispLSC_Read_ID(struct ispLSC *isp, uint8_t *id);
-
-int ispLSC_Next_State(struct ispLSC *isp);
-
-int ispLSC_Set_Command(struct ispLSC *isp, uint8_t cmd);
-
-int ispLSC_Run_Command(struct ispLSC *isp);
-
-int ispLSC_Write_Data(struct ispLSC *isp, uint32_t *bitmap, int bits);
-
-int ispLSC_Read_Data(struct ispLSC *isp, uint32_t *bitmap, int bits);
-
-int ispLSC_Diagnose(struct ispLSC *isp);
-
-#endif /* ISPLSC_H */
+#endif /* LSC_BITBANG_H */
